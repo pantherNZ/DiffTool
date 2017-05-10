@@ -62,19 +62,11 @@ int main( const int argc, const char* argv[] )
 			data_new.push_back( temp_input );
 	}
 
+	// Reverse to prioritise start of file over end
+	std::reverse( data_old.begin( ), data_old.end( ) );
+	std::reverse( data_new.begin( ), data_new.end( ) );
+
 	LCS lcs( data_old, data_new );
-
-	//std::string data_old( ( std::istreambuf_iterator<char>( old_stats_input ) ), std::istreambuf_iterator<char>( ) );
-	//std::string data_new( ( std::istreambuf_iterator<char>( new_stats_input ) ), std::istreambuf_iterator<char>( ) );
-
-	// Compute the LCS between the two inputs
-	//const std::string str1( "main sentence hahaha" );
-	//const std::string str2( "ain sentence Yhahaha" );
-	//const std::string str1( "AGCAT" );
-	//const std::string str2( "GAC" );
-	//const std::string str1( "XMJYAUZ" );
-	//const std::string str2( "MJAU" );	
-	//LCS lcs( str1, str2 );
 
 	//const auto result = lcs.ReadFirstLCS( data_old, data_new );
 	//std::cout << "Longest Common Subsequence: " << result << std::endl << std::endl;
@@ -86,9 +78,16 @@ int main( const int argc, const char* argv[] )
 	//std::cout << std::endl;
 
 	std::cout << "File diff" << std::endl;
-	std::cout << "-----------------------" << std::endl << std::endl;
-	lcs.PrintDiff( data_old, data_new );
-	std::cout << std::endl << std::endl << "-----------------------" << std::endl;
+	std::cout << "-----------------------------------" << std::endl << std::endl;
+	lcs.PrintFileWithDiff( data_old, data_new );
+	std::cout << std::endl << std::endl << "-----------------------------------" << std::endl;
+
+	lcs.Diff( data_old, data_new, false );
+
+	std::cout << std::endl << std::endl << "Broken Grandmaster stats" << std::endl;
+	std::cout << "-----------------------------------" << std::endl << std::endl;
+	lcs.PrintBrokenGrandmasterStats( data_old, data_new );
+	std::cout << std::endl << std::endl << "-----------------------------------" << std::endl;
 
 	return Pause( 0 );
 }

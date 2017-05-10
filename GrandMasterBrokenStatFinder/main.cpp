@@ -47,8 +47,25 @@ int main( const int argc, const char* argv[] )
 		return Pause( 0 );
 	}
 
-	std::string data_old( ( std::istreambuf_iterator<char>( old_stats_input ) ), std::istreambuf_iterator<char>( ) );
-	std::string data_new( ( std::istreambuf_iterator<char>( new_stats_input ) ), std::istreambuf_iterator<char>( ) );
+	// Stream files to data container
+	std::vector< std::string > data_old;
+	std::vector< std::string > data_new;
+	data_old.reserve( 35000 );
+	data_new.reserve( 35000 );
+	{
+		std::string temp_input;
+
+		while( std::getline( old_stats_input, temp_input ) )
+			data_old.push_back( temp_input );
+
+		while( std::getline( new_stats_input, temp_input ) )
+			data_new.push_back( temp_input );
+	}
+
+	LCS lcs( data_old, data_new );
+
+	//std::string data_old( ( std::istreambuf_iterator<char>( old_stats_input ) ), std::istreambuf_iterator<char>( ) );
+	//std::string data_new( ( std::istreambuf_iterator<char>( new_stats_input ) ), std::istreambuf_iterator<char>( ) );
 
 	// Compute the LCS between the two inputs
 	//const std::string str1( "main sentence hahaha" );
@@ -58,8 +75,6 @@ int main( const int argc, const char* argv[] )
 	//const std::string str1( "XMJYAUZ" );
 	//const std::string str2( "MJAU" );	
 	//LCS lcs( str1, str2 );
-		
-	LCS lcs( data_old, data_new );
 
 	//const auto result = lcs.ReadFirstLCS( data_old, data_new );
 	//std::cout << "Longest Common Subsequence: " << result << std::endl << std::endl;

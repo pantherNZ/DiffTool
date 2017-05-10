@@ -4,4 +4,8 @@
     <LocalDebuggerCommandArguments>G:\Coding\GrandMasterBrokenStatFinder\GrandMasterBrokenStatFinder\GrandMasterBrokenStatFinder</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommandArguments>G:\Coding\DiffTool.git\trunk\GrandMasterBrokenStatFinder\</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

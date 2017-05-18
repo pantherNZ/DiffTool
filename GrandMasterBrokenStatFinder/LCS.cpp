@@ -4,6 +4,10 @@
 #include <iostream>
 #include <functional>
 #include <cctype>
+#include <fstream>
+#include <iomanip>
+#include <ctime>
+#include <sstream>
 
 // Compute Longest Common Subsequence 
 // Algorithm as per https://en.wikipedia.org/wiki/Longest_common_subsequence_problem
@@ -128,45 +132,95 @@ void LCS::Diff( const std::vector< std::string >& _data_first, const std::vector
 
 void LCS::PrintBrokenGrandmasterStats( const std::vector<std::string>& _data_first, const std::vector<std::string>& _data_second )
 {
-	std::cout << "Stats with changed id:" << std::endl;
-	int difference_offset = 0;
+	auto now = std::time( nullptr );
+	tm now_loc;
+	localtime_s( &now_loc, &now );
+	std::ostringstream oss;
+	oss << std::put_time( &now_loc, "%e-%m-%y" );
+	std::string file_output_name = "Broken Stats (" + oss.str( ) + ").txt";
 
+	std::ofstream output( file_output_name );
+
+	// Console ouput
+	std::cout << "Stats with changed id:" << std::endl;
+
+	// File output
+	output << "Stats with changed id:" << std::endl;
+
+	int difference_offset = 0;
+	int no_match = 0;
+
+	// Renamed stats
 	for( auto iter = m_differences.begin( ); iter != m_differences.end( ); ++iter )
 	{
-		auto item = *iter;
+		auto& item = *iter;
 
 		if( !item.second )
 		{
-			difference_offset += ( int )item.first.second;
+			if( no_match == 2 )
+			{
+				auto previous_iter = iter;
+				previous_iter--;
+
+				if( previous_iter->first.second != item.first.second )
+					previous_iter--;
+
+				difference_offset += ( int )previous_iter->first.second;
+			}
+
 			const auto regular_index = item.first.first;
-			const auto adjusted_index = regular_index + difference_offset - ( int )item.first.second;
+			const auto adjusted_index = regular_index - ( difference_offset * ( int )item.first.second );
 			const auto matching_change = m_differences.find( std::make_pair( adjusted_index, DifferenceType( item.first.second * -1 ) ) );
 
 			// If the counter is 0 we know that we have a change from both the old and the new (meaning it was a change & not just an add or removal)
 			if( matching_change != m_differences.end( ) && ( int )item.first.second + matching_change->first.second == 0 )
 			{
-				iter->second = true;
-				matching_change->second = true;
-				difference_offset -= ( int )item.first.second;
 				std::string stat_name_first;
 				std::string stat_name_second;
 
-				if( ExtractStatId( _data_first[regular_index], stat_name_first ) &&
-					ExtractStatId( _data_second[adjusted_index], stat_name_second ) )
+				const bool first_stat_found = ExtractStatId( _data_first[item.first.second == ADDED ? adjusted_index : regular_index], stat_name_first );
+				const bool second_stat_found = ExtractStatId( _data_second[item.first.second == ADDED ? regular_index : adjusted_index], stat_name_second );
+
+				if( first_stat_found && second_stat_found )
 				{
+					item.second = true;
+					matching_change->second = true;
+					no_match = 0;
+
+					// Console ouput
 					SetConsoleTextAttribute( m_hConsole, 12 );
 					std::cout << stat_name_first.c_str( );
 					SetConsoleTextAttribute( m_hConsole, 7 );
 					std::cout << "   ->   ";
 					SetConsoleTextAttribute( m_hConsole, 10 );
 					std::cout << stat_name_second.c_str( ) << std::endl;
+
+					// File output
+					output << stat_name_first.c_str( );
+					output << "   ->   ";
+					output << stat_name_second.c_str( ) << std::endl;
+				}
+				else if( first_stat_found || second_stat_found )
+				{
+					++no_match;
+					continue;
 				}
 			}
+			else
+			{
+				difference_offset += ( int )item.first.second;
+			}
+
+			no_match = 0;
 		}
 	}
 
+	// Console ouput
 	SetConsoleTextAttribute( m_hConsole, 7 );
 	std::cout << std::endl << "Stats that have become virtual:" << std::endl;
+
+	// File output
+	output << std::endl << "Stats that have become virtual:" << std::endl;
 
 	// Stat has become virtual now
 	for( const auto& item : m_differences )
@@ -183,7 +237,7 @@ void LCS::PrintBrokenGrandmasterStats( const std::vector<std::string>& _data_fir
 				int iIndex = ( int )item.first.first - 1;
 	
 				// This is a virtual line, let's now check incrementally upwards until we find the stat
-				while( iIndex > 0 )
+				while( iIndex < _data_first.size( ) )
 				{
 					std::string current_row( _data_first[iIndex] );
 					Trim( current_row );
@@ -195,14 +249,18 @@ void LCS::PrintBrokenGrandmasterStats( const std::vector<std::string>& _data_fir
 						if( m_differences.find( std::make_pair( iIndex, ADDED ) ) == m_differences.end( ) &&
 							m_differences.find( std::make_pair( iIndex, REMOVED ) ) == m_differences.end( ) )
 						{
+							// Console ouput
 							SetConsoleTextAttribute( m_hConsole, 10 );
 							std::cout << stat_name.c_str( ) << std::endl;
+
+							// File output
+							output << stat_name.c_str( ) << std::endl;
 						}
 	
 						break;
 					}
 
-					--iIndex;
+					++iIndex;
 				} 
 			}
 		}

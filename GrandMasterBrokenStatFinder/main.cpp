@@ -15,7 +15,7 @@ int main( const int argc, const char* argv[] )
 {
 	if( argc <= 1 )
 	{
-		std::cout << "Please enter the path to the Stats.xml file in your SVN as an argument to this program and try again.." << std::endl;	
+		std::cout << "Please enter the path to the Stats.xml file in your SVN as an argument to this program and try again.." << std::endl;
 		return Pause( 1 );
 	}
 
@@ -23,43 +23,52 @@ int main( const int argc, const char* argv[] )
 	const std::string new_file_name = "Stats.xml";
 	const std::string old_file_name = "Stats_old.xml";
 
-	if( stats_file_path.substr( stats_file_path.length() - new_file_name.length( ), new_file_name.length( ) ) != new_file_name )
-		stats_file_path += "\\" + new_file_name;
-
-	std::ifstream new_stats_input;
-	new_stats_input.open( stats_file_path );
-
-	if( new_stats_input.fail( ) )
+	if( stats_file_path.substr( stats_file_path.length( ) - new_file_name.length( ), new_file_name.length( ) ) != new_file_name )
 	{
-		std::cout << "Argument for Stats.xml file is invalid!" << std::endl;
-		std::cout << "Please enter the path to the Stats.xml file in your SVN as an argument to this program and try again.." << std::endl;
-		return Pause( 1 );
-	}
-		
-	std::ifstream old_stats_input;
-	old_stats_input.open( "Stats_old.xml" );
-
-	if( old_stats_input.fail( ) )
-	{
-		std::cout << "No previous stats file found for comparison, creating \"Stats_old.xml\".." << std::endl;
-		const std::string create_file_path = std::experimental::filesystem::current_path( ).string( ) + "\\" + old_file_name;
-		std::experimental::filesystem::copy_file( stats_file_path, create_file_path );
-		return Pause( 0 );
+		if( stats_file_path.substr( stats_file_path.length( ) - 1, 1 ) != "\\" )
+			stats_file_path += "\\";
+		stats_file_path += new_file_name;
 	}
 
-	// Stream files to data container
+	const std::string create_file_path = std::experimental::filesystem::current_path( ).string( ) + "\\" + old_file_name;
+
+	// Data
 	std::vector< std::string > data_old;
 	std::vector< std::string > data_new;
 	data_old.reserve( 35000 );
 	data_new.reserve( 35000 );
+
 	{
-		std::string temp_input;
+		std::ifstream new_stats_input;
+		new_stats_input.open( stats_file_path );
 
-		while( std::getline( old_stats_input, temp_input ) )
-			data_old.push_back( temp_input );
+		if( new_stats_input.fail( ) )
+		{
+			std::cout << "Argument for Stats.xml file is invalid!" << std::endl;
+			std::cout << "Please enter the path to the Stats.xml file in your SVN as an argument to this program and try again.." << std::endl;
+			return Pause( 1 );
+		}
 
-		while( std::getline( new_stats_input, temp_input ) )
-			data_new.push_back( temp_input );
+		std::ifstream old_stats_input;
+		old_stats_input.open( "Stats_old.xml" );
+
+		if( old_stats_input.fail( ) )
+		{
+			std::cout << "No previous stats file found for comparison, creating \"Stats_old.xml\".." << std::endl;
+			std::experimental::filesystem::copy_file( stats_file_path, create_file_path );
+			return Pause( 0 );
+		}
+
+		// Stream files to data container
+		{
+			std::string temp_input;
+
+			while( std::getline( old_stats_input, temp_input ) )
+				data_old.push_back( temp_input );
+
+			while( std::getline( new_stats_input, temp_input ) )
+				data_new.push_back( temp_input );
+		}
 	}
 
 	// Reverse to prioritise start of file over end
@@ -77,17 +86,20 @@ int main( const int argc, const char* argv[] )
 	//	std::cout << s << std::endl;
 	//std::cout << std::endl;
 
-	std::cout << "File diff" << std::endl;
-	std::cout << "-----------------------------------" << std::endl << std::endl;
-	lcs.PrintFileWithDiff( data_old, data_new );
-	std::cout << std::endl << std::endl << "-----------------------------------" << std::endl;
+	//std::cout << "File diff" << std::endl;
+	//std::cout << "-----------------------------------" << std::endl << std::endl;
+	//lcs.PrintFileWithDiff( data_old, data_new );
+	//std::cout << std::endl << std::endl << "-----------------------------------" << std::endl;
 
 	lcs.Diff( data_old, data_new, false );
 
-	std::cout << std::endl << std::endl << "Broken Grandmaster stats" << std::endl;
+	std::cout << std::endl << std::endl << "Broken Grandmaster stats (results saved to \"Broken_stats (<today's date>).txt\")" << std::endl;
 	std::cout << "-----------------------------------" << std::endl << std::endl;
 	lcs.PrintBrokenGrandmasterStats( data_old, data_new );
 	std::cout << std::endl << std::endl << "-----------------------------------" << std::endl;
+
+	std::cout << std::endl << "New stats file has been saved for future comparisons.." << std::endl << std::endl;
+	std::experimental::filesystem::copy_file( stats_file_path, create_file_path, std::experimental::filesystem::copy_options::overwrite_existing );
 
 	return Pause( 0 );
 }
